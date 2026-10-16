@@ -40,6 +40,10 @@ uv run alembic upgrade head
 uv run python scripts/create_db.py
 uv run python scripts/create_db.py --recreate
 
+# (可选)创建超级管理员(默认 admin / 123456, 幂等)
+uv run python scripts/create_admin.py
+uv run python scripts/create_admin.py --on-exists reset   # 已存在则重置密码
+
 # 5. 启动
 uv run uvicorn backend.main:app --port 8080 --reload    # API
 uv run python -m backend.worker                         # worker(审计队列)

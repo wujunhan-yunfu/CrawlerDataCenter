@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { App as AntApp, ConfigProvider } from 'antd'
+import { App as AntApp, ConfigProvider, theme as antdTheme } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
+import { useThemeStore } from './stores/themeStore'
 import AuthGuard from './components/AuthGuard'
 import AppLayout from './components/AppLayout'
 import PermissionGate from './components/PermissionGate'
@@ -15,8 +16,15 @@ import AuditLogs from './pages/audit/AuditLogs'
 import NotFound from './pages/NotFound'
 
 export default function App() {
+  const resolved = useThemeStore((s) => s.resolved)
+
   return (
-    <ConfigProvider locale={zhCN}>
+    <ConfigProvider
+      locale={zhCN}
+      theme={{
+        algorithm: resolved === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+      }}
+    >
       <AntApp>
         <BrowserRouter>
           <Routes>

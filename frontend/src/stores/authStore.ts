@@ -80,6 +80,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     setTokens(tokens)
     const user = await apiMe()
     persistUser(user)
+    // 全新登录: 清空可能属于上一个账号的权限缓存, 强制重新拉取
+    usePermissionStore.getState().reset()
     set({ user, bootstrapped: true })
   },
 
@@ -88,6 +90,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     setTokens(tokens)
     const user = await apiMe()
     persistUser(user)
+    // 全新注册即登录: 清空可能属于上一个账号的权限缓存, 强制重新拉取
+    usePermissionStore.getState().reset()
     set({ user, bootstrapped: true })
   },
 

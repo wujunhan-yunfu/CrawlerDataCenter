@@ -24,6 +24,7 @@ import {
 import { apiErrorMessage } from '../../api/client'
 import { fmtTime } from '../../utils/format'
 import PermissionGate from '../../components/PermissionGate'
+import PageHeader from '../../components/PageHeader'
 import { usePermissionStore } from '../../stores/permissionStore'
 
 export default function WorkspacesList() {
@@ -95,8 +96,9 @@ export default function WorkspacesList() {
 
   return (
     <div>
-      <Card
+      <PageHeader
         title="工作空间"
+        description="管理工作空间及其成员与爬虫项目"
         extra={
           <PermissionGate permission="workspace:create">
             <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
@@ -104,7 +106,9 @@ export default function WorkspacesList() {
             </Button>
           </PermissionGate>
         }
-      >
+      />
+
+      <Card>
         <Table<WorkspaceOut>
           rowKey="id"
           loading={loading}

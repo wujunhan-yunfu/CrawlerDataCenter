@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Avatar, Dropdown, Layout, Menu, Space, Tag, Typography } from 'antd'
+import { Avatar, Badge, Dropdown, Layout, Menu, Space, Typography, theme } from 'antd'
 import {
   AppstoreOutlined,
   DashboardOutlined,
@@ -11,14 +11,16 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { useAppStore } from '../stores/appStore'
 import { usePermissionStore } from '../stores/permissionStore'
+import ThemeToggle from './ThemeToggle'
 
-const { Header, Sider, Content } = Layout
+const { Header, Content } = Layout
 
 export default function AppLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout } = useAuthStore()
   const { health, refreshHealth } = useAppStore()
+  const { token } = theme.useToken()
   const permissionCache = usePermissionStore((s) => s.cache)
   const loadPermissions = usePermissionStore((s) => s.load)
 
@@ -51,68 +53,64 @@ export default function AppLayout() {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider width={220} theme="dark">
-        <div
-          style={{
-            height: 56,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff',
-            fontSize: 16,
-            fontWeight: 600,
-            letterSpacing: 1,
-          }}
-        >
-          Crawler Data Center
-        </div>
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={[selectedKey]}
-          items={menuItems}
-          onClick={({ key }) => navigate(key)}
-        />
-      </Sider>
-      <Layout>
-        <Header
-          style={{
-            background: '#fff',
-            padding: '0 24px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-          }}
-        >
-          <Space size={12}>
-            <Typography.Text strong>{user?.username ?? ''}</Typography.Text>
-            <Tag color={health?.ok ? 'green' : 'red'}>{health?.ok ? '服务正常' : '服务异常'}</Tag>
-          </Space>
-          <Dropdown
-            menu={{
-              items: [
-                {
-                  key: 'logout',
-                  icon: <LogoutOutlined />,
-                  label: '退出登录',
-                  onClick: () => {
-                    void logout().then(() => navigate('/login'))
-                  },
-                },
-              ],
-            }}
-          >
-            <Space style={{ cursor: 'pointer' }}>
-              <Avatar size="small" icon={<UserOutlined />} />
-              <span>{user?.username}</span>
+      <Header
+        className="cdc-topbar"
+        style={{
+          background: token.colorBgContainer,
+          borderBottom: `1px solid ${token.colorBorderSecondary}`,
+        }}
+      >
+        <div className="cdc-topbar-inner">
+          <div className="cdc-brand" role="button" onClick={() => navigate('/')}>
+            <img src="/favicon.svg" alt="Crawler Data Center" width={26} height={25} />
+            <span className="cdc-brand-text">Crawler Data Center</span>
+          </div>
+
+          <Menu
+            className="cdc-nav"
+            mode="horizontal"
+            selectedKeys={[selectedKey]}
+            items={menuItems}
+            onClick={({ key }) => navigate(key)}
+            style={{ borderBottom: 'none', background: 'transparent', flex: 1, minWidth: 0 }}
+          />
+
+          <Space size={16} className="cdc-topbar-actions">
+            <Space size={6} className="cdc-health">
+              <Badge status={health?.ok ? 'success' : 'error'} />
+              <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+                {health?.ok ? '服务正常' : '服务异常'}
+              </Typography.Text>
             </Space>
-          </Dropdown>
-        </Header>
-        <Content style={{ margin: 24 }}>
+            <ThemeToggle size="small" />
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: 'logout',
+                    icon: <LogoutOutlined />,
+                    label: '退出登录',
+                    onClick: () => {
+                      void logout().then(() => navigate('/login'))
+                    },
+                  },
+                ],
+              }}
+            >
+              <Space size={8} style={{ cursor: 'pointer' }}>
+                <Avatar size="small" icon={<UserOutlined />} />
+                <span className="cdc-user-name">{user?.username}</span>
+              </Space>
+            </Dropdown>
+          </Space>
+        </div>
+      </Header>
+
+      <Content className="cdc-content">
+        <div className="cdc-content-inner">
           <Outlet />
-        </Content>
-      </Layout>
+        </div>
+      </Content>
     </Layout>
   )
 }

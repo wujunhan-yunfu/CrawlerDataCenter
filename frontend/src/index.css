@@ -1,7 +1,181 @@
+:root {
+  --cdc-body-bg: #f5f5f5;
+  --cdc-auth-bg: #ffffff;
+  --cdc-auth-glow: rgba(77, 107, 254, 0.1);
+  --cdc-auth-logo-bg: #f6f7f9;
+  --cdc-auth-logo-border: rgba(0, 0, 0, 0.08);
+  --cdc-text-secondary: rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme='dark'] {
+  --cdc-body-bg: #000000;
+  --cdc-auth-bg: #0b0b0d;
+  --cdc-auth-glow: rgba(86, 134, 254, 0.18);
+  --cdc-auth-logo-bg: rgba(255, 255, 255, 0.06);
+  --cdc-auth-logo-border: rgba(255, 255, 255, 0.12);
+  --cdc-text-secondary: rgba(255, 255, 255, 0.45);
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC',
     'Microsoft YaHei', sans-serif;
+  background: var(--cdc-body-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* ------------------------------ 认证页布局 ------------------------------ */
+
+.cdc-auth {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 96px 24px 80px;
+  background-color: var(--cdc-auth-bg);
+  background-image: radial-gradient(80% 55% at 50% 0%, var(--cdc-auth-glow), transparent 70%);
+  transition: background-color 0.3s ease;
+}
+
+.cdc-auth-toggle {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+}
+
+.cdc-auth-panel {
+  width: 100%;
+  max-width: 360px;
+}
+
+.cdc-auth-logo {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  border: 1px solid var(--cdc-auth-logo-border);
+  background: var(--cdc-auth-logo-bg);
+}
+
+.cdc-auth-submit {
+  height: 46px;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+.cdc-auth-footer {
+  position: absolute;
+  bottom: 20px;
+  font-size: 12px;
+  color: var(--cdc-text-secondary);
+}
+
+@media (max-width: 480px) {
+  .cdc-auth-footer {
+    display: none;
+  }
+}
+
+/* ------------------------------ 控制台顶栏/内容 ------------------------------ */
+
+.cdc-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+header.cdc-topbar {
+  height: 64px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  line-height: normal;
+}
+
+.cdc-topbar-inner {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.cdc-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.cdc-nav {
+  flex: 1;
+  min-width: 0;
+}
+
+.cdc-topbar-actions {
+  flex: none;
+}
+
+.cdc-content {
+  padding: 24px;
+}
+
+.cdc-content-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.cdc-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.cdc-page-header-title {
+  margin: 0 !important;
+}
+
+.cdc-page-header-desc {
+  font-size: 13px;
+}
+
+.cdc-page-header-main {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  header.cdc-topbar {
+    padding: 0 16px;
+  }
+  .cdc-content {
+    padding: 16px;
+  }
+  .cdc-health {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .cdc-brand-text,
+  .cdc-user-name {
+    display: none;
+  }
+  .cdc-topbar-inner {
+    gap: 12px;
+  }
+}
+

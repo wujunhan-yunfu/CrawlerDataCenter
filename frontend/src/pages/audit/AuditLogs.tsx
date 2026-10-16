@@ -5,6 +5,7 @@ import type { AuditOut } from '../../api/types'
 import { apiListAudit } from '../../api/data'
 import { apiErrorMessage } from '../../api/client'
 import { fmtTime } from '../../utils/format'
+import PageHeader from '../../components/PageHeader'
 
 const ACTION_LABELS: Record<string, string> = {
   'workspace.create': '创建工作空间',
@@ -40,8 +41,9 @@ export default function AuditLogs() {
 
   return (
     <div>
-      <Card
+      <PageHeader
         title="审计日志"
+        description="敏感操作的留痕记录"
         extra={
           <Space>
             <Select
@@ -63,7 +65,9 @@ export default function AuditLogs() {
             </Button>
           </Space>
         }
-      >
+      />
+
+      <Card>
         <Table<AuditOut>
           rowKey="id"
           loading={loading}

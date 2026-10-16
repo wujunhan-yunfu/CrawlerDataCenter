@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Alert, Button, Card, Form, Input, Typography } from 'antd'
+import { Alert, Button, Form, Input, Typography } from 'antd'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
 import { apiErrorMessage } from '../../api/client'
+import AuthLayout from '../../components/AuthLayout'
 
 interface LoginForm {
   username: string
@@ -33,39 +34,42 @@ export default function Login() {
   }
 
   return (
-    <div
-      style={{
-        height: '100vh',
-        display: 'flex',
-        overflowY: 'auto',
-        background: 'linear-gradient(135deg, #1f2937 0%, #111827 100%)',
-      }}
-    >
-      <Card style={{ width: 380, margin: 'auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <Typography.Title level={3} style={{ marginBottom: 4 }}>
-            Crawler Data Center
-          </Typography.Title>
-          <Typography.Text type="secondary">爬虫数据中心控制台</Typography.Text>
+    <AuthLayout>
+      <div style={{ textAlign: 'center' }}>
+        {/* 参考 DeepSeek 登录页: 原二维码登录框位置替换为品牌 Logo */}
+        <div className="cdc-auth-logo">
+          <img src="/favicon.svg" alt="Crawler Data Center" width={46} height={44} />
         </div>
-        {error && <Alert type="error" message={error} showIcon style={{ marginBottom: 16 }} />}
-        <Form<LoginForm> onFinish={onFinish} size="large" layout="vertical">
-          <Form.Item name="username" rules={[{ required: true, message: '请输入用户名' }]}>
-            <Input prefix={<UserOutlined />} placeholder="用户名" autoComplete="username" />
-          </Form.Item>
-          <Form.Item name="password" rules={[{ required: true, message: '请输入密码' }]}>
-            <Input.Password prefix={<LockOutlined />} placeholder="密码" autoComplete="current-password" />
-          </Form.Item>
-          <Form.Item style={{ marginBottom: 12 }}>
-            <Button type="primary" htmlType="submit" block loading={submitting}>
-              登录
-            </Button>
-          </Form.Item>
-        </Form>
-        <div style={{ textAlign: 'center' }}>
-          还没有账号？<Link to="/register">立即注册</Link>
-        </div>
-      </Card>
-    </div>
+        <Typography.Title level={3} style={{ marginBottom: 8 }}>
+          欢迎回来
+        </Typography.Title>
+        <Typography.Text type="secondary">登录爬虫数据中心控制台</Typography.Text>
+      </div>
+
+      {error && <Alert type="error" message={error} showIcon style={{ marginTop: 24 }} />}
+
+      <Form<LoginForm> onFinish={onFinish} layout="vertical" size="large" requiredMark={false} style={{ marginTop: 28 }}>
+        <Form.Item name="username" rules={[{ required: true, message: '请输入用户名' }]}>
+          <Input variant="filled" prefix={<UserOutlined />} placeholder="用户名" autoComplete="username" />
+        </Form.Item>
+        <Form.Item name="password" rules={[{ required: true, message: '请输入密码' }]}>
+          <Input.Password
+            variant="filled"
+            prefix={<LockOutlined />}
+            placeholder="密码"
+            autoComplete="current-password"
+          />
+        </Form.Item>
+        <Form.Item style={{ marginBottom: 12 }}>
+          <Button type="primary" htmlType="submit" block loading={submitting} className="cdc-auth-submit">
+            登录
+          </Button>
+        </Form.Item>
+      </Form>
+
+      <div style={{ textAlign: 'center', marginTop: 8 }}>
+        <Typography.Text type="secondary">还没有账号？</Typography.Text> <Link to="/register">立即注册</Link>
+      </div>
+    </AuthLayout>
   )
 }

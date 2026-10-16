@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { App as AntApp, Button, Card, Descriptions, Popconfirm, Space, Tabs, Tag, Typography } from 'antd'
+import { App as AntApp, Button, Card, Descriptions, Popconfirm, Tabs, Tag, Typography } from 'antd'
 import { useNavigate, useParams } from 'react-router-dom'
 import { apiDeleteProject, apiGetProject } from '../../api/projects'
 import { apiErrorMessage } from '../../api/client'
@@ -11,6 +11,7 @@ import RunPanel from './RunPanel'
 import DataPanel from './DataPanel'
 import LoginPanel from './LoginPanel'
 import PermissionGate from '../../components/PermissionGate'
+import PageHeader from '../../components/PageHeader'
 import { usePermissionStore } from '../../stores/permissionStore'
 
 export default function ProjectDetail() {
@@ -62,20 +63,17 @@ export default function ProjectDetail() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography.Title level={4} style={{ marginTop: 0 }}>
-          项目：{project?.name ?? `#${id}`}
-        </Typography.Title>
-        {project && (
-          <Space>
-            {canDelete && (
-              <Popconfirm title="确定删除该项目？" onConfirm={() => void remove()}>
-                <Button danger>删除项目</Button>
-              </Popconfirm>
-            )}
-          </Space>
-        )}
-      </div>
+      <PageHeader
+        title={`项目：${project?.name ?? `#${id}`}`}
+        description="运行、开发容器、数据与 login 实时画面"
+        extra={
+          project && canDelete ? (
+            <Popconfirm title="确定删除该项目？" onConfirm={() => void remove()}>
+              <Button danger>删除项目</Button>
+            </Popconfirm>
+          ) : undefined
+        }
+      />
 
       {project && (
         <Card style={{ marginBottom: 16 }}>

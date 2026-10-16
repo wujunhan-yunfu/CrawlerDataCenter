@@ -4,6 +4,7 @@ import { ApiOutlined, CheckCircleOutlined, DatabaseOutlined, ProjectOutlined } f
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../stores/appStore'
 import { fmtTime } from '../utils/format'
+import PageHeader from '../components/PageHeader'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -15,9 +16,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <Typography.Title level={4} style={{ marginTop: 0 }}>
-        总览
-      </Typography.Title>
+      <PageHeader title="总览" description="服务健康状态与工作空间概览" />
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
           <Card>

@@ -12,6 +12,57 @@ export function ctxKey(ctx: PermissionCtx = {}): string {
   return 'global'
 }
 
+const PERMISSIONS_KEY = 'cdc_permissions'
+const USER_KEY = 'cdc_user'
+
+interface PersistedPermissions {
+  userId: number | null
+  cache: Record<string, string[]>
+}
+
+/** 读取当前登录用户 id, 用于把权限缓存与账号绑定, 避免切换账号后越权重用。 */
+function currentUserId(): number | null {
+  try {
+    const raw = localStorage.getItem(USER_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as { id?: unknown }
+    return typeof parsed?.id === 'number' ? parsed.id : null
+  } catch {
+    return null
+  }
+}
+
+function loadStoredCache(): Record<string, string[]> {
+  try {
+    const raw = localStorage.getItem(PERMISSIONS_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as PersistedPermissions
+    // 非当前用户或结构异常的缓存一律丢弃
+    if (!parsed || parsed.userId !== currentUserId()) {
+      localStorage.removeItem(PERMISSIONS_KEY)
+      return {}
+    }
+    if (!parsed.cache || typeof parsed.cache !== 'object') return {}
+    return parsed.cache
+  } catch {
+    localStorage.removeItem(PERMISSIONS_KEY)
+    return {}
+  }
+}
+
+function persistCache(cache: Record<string, string[]>): void {
+  try {
+    if (Object.keys(cache).length === 0) {
+      localStorage.removeItem(PERMISSIONS_KEY)
+      return
+    }
+    const payload: PersistedPermissions = { userId: currentUserId(), cache }
+    localStorage.setItem(PERMISSIONS_KEY, JSON.stringify(payload))
+  } catch {
+    // 忽略持久化失败(隐私模式 / 配额超限等), 不影响内存缓存
+  }
+}
+
 interface PermissionState {
   cache: Record<string, string[]>
   pending: Record<string, Promise<string[]>>
@@ -20,7 +71,7 @@ interface PermissionState {
 }
 
 export const usePermissionStore = create<PermissionState>((set, get) => ({
-  cache: {},
+  cache: loadStoredCache(),
   pending: {},
 
   load: (ctx = {}) => {
@@ -35,7 +86,9 @@ export const usePermissionStore = create<PermissionState>((set, get) => ({
       project_id: ctx.projectId,
     })
       .then((data) => {
-        set((s) => ({ cache: { ...s.cache, [key]: data.permissions } }))
+        const cache = { ...get().cache, [key]: data.permissions }
+        persistCache(cache)
+        set({ cache })
         return data.permissions
       })
       .catch(() => [])
@@ -50,5 +103,12 @@ export const usePermissionStore = create<PermissionState>((set, get) => ({
     return promise
   },
 
-  reset: () => set({ cache: {}, pending: {} }),
+  reset: () => {
+    try {
+      localStorage.removeItem(PERMISSIONS_KEY)
+    } catch {
+      // 忽略: 存储不可用时只需清空内存缓存
+    }
+    set({ cache: {}, pending: {} })
+  },
 }))

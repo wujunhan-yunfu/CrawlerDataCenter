@@ -4,7 +4,24 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
     <title>CrawlerDataCenter 控制台</title>
+    <script>
+      // 首屏前应用主题, 避免暗色模式闪烁
+      ;(function () {
+        try {
+          var mode = localStorage.getItem('cdc_theme')
+          var dark =
+            mode === 'dark' ||
+            ((!mode || mode === 'system') &&
+              window.matchMedia &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches)
+          var resolved = dark ? 'dark' : 'light'
+          document.documentElement.dataset.theme = resolved
+          document.documentElement.style.colorScheme = resolved
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
