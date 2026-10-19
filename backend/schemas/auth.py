@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, EmailStr, Field
 
+from .common import SnowflakeId
+
 
 class RegisterIn(BaseModel):
     username: str = Field(min_length=3, max_length=64)
@@ -32,7 +34,7 @@ class LogoutIn(BaseModel):
 
 
 class UserOut(BaseModel):
-    id: int
+    id: SnowflakeId
     username: str
     email: str
     status: str
@@ -49,5 +51,5 @@ class PermissionsOut(BaseModel):
     """
 
     permissions: list[str]
-    workspace_id: int | None = None
-    project_id: int | None = None
+    workspace_id: SnowflakeId | None = None
+    project_id: SnowflakeId | None = None

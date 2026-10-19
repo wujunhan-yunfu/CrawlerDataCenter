@@ -1,17 +1,17 @@
 import client from './client'
 import type { AuditOut, DataItemOut, HealthOut } from './types'
 
-export function apiListData(projectId: number, params: { run_id?: string; offset?: number; limit?: number } = {}) {
+export function apiListData(projectId: string, params: { run_id?: string; offset?: number; limit?: number } = {}) {
   return client.get<DataItemOut[]>(`/projects/${projectId}/data`, { params }).then((r) => r.data)
 }
 
-export function apiDownloadData(itemId: number) {
+export function apiDownloadData(itemId: string) {
   return client.get<ArrayBuffer>(`/data/${itemId}/download`, { responseType: 'arraybuffer' }).then((r) => r.data)
 }
 
 export interface AuditQuery {
-  workspace_id?: number
-  actor_id?: number
+  workspace_id?: string
+  actor_id?: string
   action?: string
   offset?: number
   limit?: number

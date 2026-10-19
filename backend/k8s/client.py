@@ -175,3 +175,18 @@ class RealKubeClient(KubeClient):
         # 生产: 使用 K8s port-forward(streaming) 或反向代理到 ClusterIP Service。
         # 本骨架返回连接参数, 由 HTTP 层做 port-forward 桥接。
         return {"pod": pod_name, "path": path, "port": port, "namespace": namespace}
+
+
+def build_kube_client(namespace: str | None = None) -> KubeClient:
+    """构造 KubeClient: 优先真实集群; 开发/本地环境回退 Fake(避免无集群时报错)。
+
+    生产(非 dev/local)缺少 kubernetes 依赖时直接抛出, 防止"假成功"。
+    """
+    from ..config import settings
+
+    try:
+        return RealKubeClient(namespace or settings.k8s_namespace)
+    except Exception:  # noqa: BLE001
+        if settings.environment in ("dev", "local"):
+            return FakeKubeClient()
+        raise

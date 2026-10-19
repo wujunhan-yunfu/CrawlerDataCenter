@@ -7,7 +7,9 @@ ready → stopping → absent (空闲 TTL 回收)
 
 from __future__ import annotations
 
+import asyncio
 import time
+from collections.abc import Awaitable, Callable
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -85,13 +87,14 @@ class DevContainerService:
             self._touch(session, row)
             return row
         if row.phase == "failed":
-            # 重试: 允许 failed -> pending
+            # 重试: 允许 failed -> pending, 同时重置计时基准, 避免复用旧 created_at 立即判超时
             row.phase = "absent"  # 通过 absent 中转以复用迁移规则
         if row.phase == "pending" or row.phase == "starting":
             # 已有容器在拉起中, 复用并轮询
             return row
 
         # absent -> pending
+        row.created_at = int(time.time() * 1000)
         self._transition(row, "pending")
         await session.commit()
 
@@ -136,7 +139,19 @@ class DevContainerService:
     ) -> DevContainer:
         """就绪探针轮询: starting -> ready(探针通过) / failed(超时)。"""
         row = await self._get_or_create_row(session, project)
-        ttl = ttl or settings.dev_container_timeout
+
+        # 开发模式不探测 Pod; 同时纠正历史数据里遗留的本地直连地址, 统一为代理路径
+        if self.is_local_mode():
+            if row.phase == "ready":
+                expected = self.dev_url_for(project)
+                if row.dev_url != expected:
+                    row.dev_url = expected
+                    row.pod_name = None
+                    row.service_name = None
+                    await session.commit()
+            return row
+
+        ttl = ttl if ttl is not None else settings.dev_container_timeout
         if row.phase != "starting" or not row.pod_name:
             return row
 
@@ -147,7 +162,7 @@ class DevContainerService:
 
         if status is not None and status.ready:
             self._transition(row, "ready")
-            row.dev_url = f"/dev/{project.workspace_id}/{project.id}"
+            row.dev_url = self.dev_url_for(project)
             await session.commit()
             if self.rds:
                 await HotState(self.rds.client).set_json(
@@ -166,6 +181,94 @@ class DevContainerService:
             self._transition(row, "failed", "START_TIMEOUT")
             await session.commit()
             return row
+        return row
+
+    async def launch(
+        self,
+        session: AsyncSession,
+        project: CrawlerProject,
+        *,
+        timeout: int | None = None,
+        interval: float = 2.0,
+        progress: Callable[[DevContainer], Awaitable[None] | None] | None = None,
+    ) -> DevContainer:
+        """拉起并阻塞轮询直到 ready/failed/超时(Celery 任务执行体)。
+
+        与 `ensure` + 多次 `poll` 的组合等价, 但把"持续监听"收敛到服务层,
+        便于异步任务一次执行到终态; 每次轮询可通过 progress 回调上报进度。
+
+        开发模式下不创建 Pod, 直接置 ready 并返回与 Pod 模式**相同**的
+        dev_url(经 CDC 代理访问), 仅代理上游指向本地 ACS。
+        """
+        if self.is_local_mode():
+            row = await self.ensure_local(session, project)
+            if progress is not None:
+                result = progress(row)
+                if asyncio.iscoroutine(result):
+                    await result
+            return row
+
+        row = await self.ensure(session, project)
+        limit = timeout if timeout is not None else settings.dev_container_timeout
+        deadline = time.monotonic() + limit
+        while row.phase in ("pending", "starting"):
+            if progress is not None:
+                result = progress(row)
+                if asyncio.iscoroutine(result):
+                    await result
+            if time.monotonic() >= deadline:
+                self._transition(row, "failed", "START_TIMEOUT")
+                await session.commit()
+                break
+            await asyncio.sleep(interval)
+            row = await self.poll(session, project, ttl=timeout)
+        return row
+
+    @staticmethod
+    def is_local_mode() -> bool:
+        """开发模式: 不拉起 K8s, 直接访问本地 ACS。"""
+        return settings.use_local_dev_container
+
+    @staticmethod
+    def dev_url_for(project: CrawlerProject) -> str:
+        """对外访问地址(与 Pod 模式一致, 经 CDC 反向代理)。"""
+        return f"/dev/{project.workspace_id}/{project.id}"
+
+    @staticmethod
+    def upstream_url(project: CrawlerProject, row: DevContainer | None = None) -> str:
+        """代理上游: 开发模式 -> 本地 ACS; 集群模式 -> K8s Service。
+
+        对外 dev_url/路由前缀与代理方式不变, 仅上游目标不同。
+        """
+        if settings.use_local_dev_container:
+            return settings.acs_local_url
+        service = (row.service_name if row else None) or service_name_for(project.crawler_id)
+        namespace = (row.namespace if row else None) or settings.k8s_namespace
+        return f"http://{service}.{namespace}.svc.cluster.local:8080"
+
+    async def ensure_local(
+        self, session: AsyncSession, project: CrawlerProject
+    ) -> DevContainer:
+        """开发模式: 跳过 Pod 拉起, 直接置 ready(dev_url 与 Pod 模式相同)。"""
+        row = await self._get_or_create_row(session, project)
+        if row.phase in ("failed", "stopping"):
+            row.phase = "absent"
+        if row.phase == "absent":
+            self._transition(row, "pending")
+        if row.phase == "pending":
+            self._transition(row, "starting")
+        if row.phase == "starting":
+            self._transition(row, "ready")
+        elif row.phase == "ready":
+            self._touch(session, row)
+        row.dev_url = self.dev_url_for(project)
+        row.pod_name = None
+        row.service_name = None
+        await session.commit()
+        if self.rds:
+            await HotState(self.rds.client).set_json(
+                self._hot_key(row.project_id), self.to_dict(row), _DEV_STATE_TTL
+            )
         return row
 
     def _touch(self, session: AsyncSession, row: DevContainer) -> None:
@@ -250,12 +353,12 @@ class DevContainerService:
         return list(rows)
 
     async def list_failed_timeout(self, session: AsyncSession) -> list[DevContainer]:
-        """超时未就绪的 starting 容器(monitor 兜底置 failed)。"""
+        """超时未就绪的 pending/starting 容器(monitor 兜底置 failed)。"""
         now = int(time.time() * 1000)
         rows = (
             await session.execute(
                 select(DevContainer).where(
-                    DevContainer.phase == "starting",
+                    DevContainer.phase.in_(("pending", "starting")),
                     DevContainer.created_at < now - settings.dev_container_timeout * 1000,
                 )
             )

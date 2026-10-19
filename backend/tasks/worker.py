@@ -69,7 +69,7 @@ async def monitor_loop(kube, stop_event: asyncio.Event) -> None:
                 # 超时未就绪兜底
                 stuck = await dev_svc.list_failed_timeout(session)
                 for dc in stuck:
-                    if dc.phase == "starting":
+                    if dc.phase in ("pending", "starting"):
                         dc.phase = "failed"
                         dc.error_code = "START_TIMEOUT"
                 if stuck:

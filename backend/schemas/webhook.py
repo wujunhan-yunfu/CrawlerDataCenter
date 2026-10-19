@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from .common import SnowflakeId
+
 
 # ---- 开发容器 ----
 
 class DevContainerOut(BaseModel):
-    project_id: int
+    project_id: SnowflakeId
     crawler_id: str
     phase: str
     dev_url: str | None
@@ -18,6 +20,22 @@ class DevContainerOut(BaseModel):
     expires_at: int | None
 
     model_config = {"from_attributes": True}
+
+
+class DevContainerTaskOut(BaseModel):
+    """异步拉起任务状态: 前端循环轮询直到 success/failed/timeout。"""
+
+    task_id: str | None = None
+    project_id: SnowflakeId
+    status: str          # pending / running / success / failed / timeout
+    phase: str           # absent/pending/starting/ready/stopping/failed
+    mode: str            # k8s / local
+    dev_url: str | None = None
+    pod_name: str | None = None
+    error_code: str | None = None
+    message: str | None = None
+    started_at: int | None = None
+    elapsed_ms: int | None = None
 
 
 # ---- 运行 ----
@@ -31,9 +49,9 @@ class RunTrigger(BaseModel):
 
 class RunOut(BaseModel):
     run_id: str
-    project_id: int
+    project_id: SnowflakeId
     crawler_id: str
-    workspace_id: int
+    workspace_id: SnowflakeId
     mode: str
     trigger: str
     cron: str | None
@@ -53,9 +71,9 @@ class RunDetailOut(RunOut):
 
 class RunProcessOut(BaseModel):
     process_id: str
-    project_id: int
+    project_id: SnowflakeId
     crawler_id: str
-    workspace_id: int
+    workspace_id: SnowflakeId
     cron: str | None
     pod_name: str | None
     status: str
@@ -98,11 +116,11 @@ class WebhookErrorOut(BaseModel):
 # ---- 数据 ----
 
 class DataItemOut(BaseModel):
-    id: int
+    id: SnowflakeId
     run_id: str
     crawler_id: str
-    project_id: int
-    workspace_id: int
+    project_id: SnowflakeId
+    workspace_id: SnowflakeId
     save_id: str
     seq: int
     kind: str
@@ -128,12 +146,12 @@ class DataDownloadOut(BaseModel):
 # ---- 审计 ----
 
 class AuditOut(BaseModel):
-    id: int
-    actor_id: int | None
+    id: SnowflakeId
+    actor_id: SnowflakeId | None
     action: str
     target_type: str | None
-    target_id: int | None
-    workspace_id: int | None
+    target_id: SnowflakeId | None
+    workspace_id: SnowflakeId | None
     detail_json: dict | None
     ip: str | None
     created_at: int

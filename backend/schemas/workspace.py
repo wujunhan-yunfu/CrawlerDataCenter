@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from .common import SnowflakeId
+
 
 class WorkspaceCreate(BaseModel):
     name: str = Field(min_length=1, max_length=128)
@@ -17,9 +19,9 @@ class WorkspaceUpdate(BaseModel):
 
 
 class WorkspaceOut(BaseModel):
-    id: int
+    id: SnowflakeId
     name: str
-    owner_id: int
+    owner_id: SnowflakeId
     status: str
     quota_json: dict | None
     created_at: int
@@ -38,11 +40,11 @@ class MemberRoleIn(BaseModel):
 
 
 class MemberOut(BaseModel):
-    user_id: int
+    user_id: SnowflakeId
     username: str
     role: str
     scope: str
-    project_id: int | None
+    project_id: SnowflakeId | None
 
     model_config = {"from_attributes": True}
 
@@ -63,8 +65,8 @@ class ProjectUpdate(BaseModel):
 
 
 class ProjectOut(BaseModel):
-    id: int
-    workspace_id: int
+    id: SnowflakeId
+    workspace_id: SnowflakeId
     name: str
     description: str | None
     source_type: str

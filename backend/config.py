@@ -53,9 +53,20 @@ class Settings(BaseSettings):
     # ---- 开发容器 ----
     acs_image: str = "agentcrawlerstudio:latest"
     k8s_namespace: str = "cdc"
+    # auto: environment=dev/local 时使用本地 ACS(不拉起容器), 其余环境走 K8s
+    # k8s : 始终通过 Celery + K8s 拉起开发容器
+    # local: 始终直接使用本地 ACS
+    dev_container_mode: Literal["auto", "k8s", "local"] = "auto"
+    acs_local_url: str = "http://localhost:8000"  # 本地 ACS 代理上游(对外 dev_url 不变)
     dev_container_idle_ttl: int = 1800     # 空闲回收 TTL(秒)
     dev_container_timeout: int = 120       # pending/starting 总超时(秒)
     workspace_container_quota: int = 3     # 每空间并发 dev 容器上限
+
+    # ---- Celery(开发容器异步拉起等) ----
+    celery_broker_url: str = ""            # 缺省复用 redis_url
+    celery_result_backend: str = ""        # 缺省复用 redis_url
+    celery_task_soft_time_limit: int = 150  # 秒; 应略大于 dev_container_timeout
+    celery_task_time_limit: int = 180
 
     # ---- 调度 / 心跳 ----
     heartbeat_interval: int = 30           # ACS 心跳间隔(秒), 判定阈值 = max(3x, 90)
@@ -74,6 +85,15 @@ class Settings(BaseSettings):
     # ---- 密钥 ----
     webhook_secret: str = ""               # 入站 webhook 校验密钥(缺省用 jwt_secret)
     field_encryption_key: str = ""         # 敏感字段加密密钥(32字节 base64), 空则不加密
+
+    @property
+    def use_local_dev_container(self) -> bool:
+        """开发模式(开发/本地环境)直接访问本地 ACS, 不拉起 K8s 容器。"""
+        if self.dev_container_mode == "local":
+            return True
+        if self.dev_container_mode == "k8s":
+            return False
+        return self.environment in ("dev", "local")
 
 
 @lru_cache

@@ -15,7 +15,7 @@ export interface WorkspaceUpdatePayload {
 export interface MemberInvitePayload {
   username: string
   role: string
-  project_id?: number | null
+  project_id?: string | null
 }
 
 export function apiListWorkspaces() {
@@ -26,26 +26,26 @@ export function apiCreateWorkspace(payload: WorkspaceCreatePayload) {
   return client.post<WorkspaceOut>('/workspaces', payload).then((r) => r.data)
 }
 
-export function apiGetWorkspace(id: number) {
+export function apiGetWorkspace(id: string) {
   return client.get<WorkspaceOut>(`/workspaces/${id}`).then((r) => r.data)
 }
 
-export function apiUpdateWorkspace(id: number, payload: WorkspaceUpdatePayload) {
+export function apiUpdateWorkspace(id: string, payload: WorkspaceUpdatePayload) {
   return client.patch<WorkspaceOut>(`/workspaces/${id}`, payload).then((r) => r.data)
 }
 
-export function apiDeleteWorkspace(id: number) {
+export function apiDeleteWorkspace(id: string) {
   return client.delete<{ ok: boolean }>(`/workspaces/${id}`).then((r) => r.data)
 }
 
-export function apiListMembers(workspaceId: number) {
+export function apiListMembers(workspaceId: string) {
   return client.get<MemberOut[]>(`/workspaces/${workspaceId}/members`).then((r) => r.data)
 }
 
-export function apiAddMember(workspaceId: number, payload: MemberInvitePayload) {
+export function apiAddMember(workspaceId: string, payload: MemberInvitePayload) {
   return client.post<MemberOut>(`/workspaces/${workspaceId}/members`, payload).then((r) => r.data)
 }
 
-export function apiRemoveMember(workspaceId: number, userId: number) {
+export function apiRemoveMember(workspaceId: string, userId: string) {
   return client.delete<{ ok: boolean }>(`/workspaces/${workspaceId}/members/${userId}`).then((r) => r.data)
 }

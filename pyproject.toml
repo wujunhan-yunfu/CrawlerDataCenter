@@ -20,6 +20,8 @@ dependencies = [
     "croniter>=4.0",
     "python-multipart>=0.0.20",
     "motor>=3.6",
+    "celery[redis]>=5.4",
+    "websockets>=13.0",
 ]
 
 [project.optional-dependencies]

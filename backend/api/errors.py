@@ -29,6 +29,13 @@ def bad_request(code: str, message: str) -> HTTPException:
     return HTTPException(status.HTTP_400_BAD_REQUEST, detail={"ok": False, "error": code, "message": message})
 
 
+def service_unavailable(code: str, message: str) -> HTTPException:
+    return HTTPException(
+        status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail={"ok": False, "error": code, "message": message},
+    )
+
+
 def forbidden(code: str, message: str = "权限不足") -> HTTPException:
     return HTTPException(status.HTTP_403_FORBIDDEN, detail={"ok": False, "error": code, "message": message})
 

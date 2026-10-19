@@ -2,8 +2,8 @@ import { create } from 'zustand'
 import { apiGetPermissions } from '../api/auth'
 
 export interface PermissionCtx {
-  workspaceId?: number
-  projectId?: number
+  workspaceId?: string
+  projectId?: string
 }
 
 export function ctxKey(ctx: PermissionCtx = {}): string {
@@ -16,17 +16,18 @@ const PERMISSIONS_KEY = 'cdc_permissions'
 const USER_KEY = 'cdc_user'
 
 interface PersistedPermissions {
-  userId: number | null
+  userId: string | null
   cache: Record<string, string[]>
 }
 
 /** 读取当前登录用户 id, 用于把权限缓存与账号绑定, 避免切换账号后越权重用。 */
-function currentUserId(): number | null {
+function currentUserId(): string | null {
   try {
     const raw = localStorage.getItem(USER_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as { id?: unknown }
-    return typeof parsed?.id === 'number' ? parsed.id : null
+    if (typeof parsed?.id === 'string' || typeof parsed?.id === 'number') return String(parsed.id)
+    return null
   } catch {
     return null
   }

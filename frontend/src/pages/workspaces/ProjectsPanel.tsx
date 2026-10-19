@@ -24,7 +24,7 @@ import PermissionGate from '../../components/PermissionGate'
 import { usePermissionStore } from '../../stores/permissionStore'
 
 interface Props {
-  workspaceId: number
+  workspaceId: string
 }
 
 interface ProjectForm {
@@ -104,7 +104,7 @@ export default function ProjectsPanel({ workspaceId }: Props) {
     }
   }
 
-  const remove = async (id: number) => {
+  const remove = async (id: string) => {
     try {
       await apiDeleteProject(id)
       message.success('已删除项目')

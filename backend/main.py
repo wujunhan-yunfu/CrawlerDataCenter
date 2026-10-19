@@ -19,6 +19,7 @@ from .routers import (
     auth,
     data,
     dev_container,
+    dev_proxy,
     health,
     login_live,
     projects,
@@ -27,6 +28,7 @@ from .routers import (
     workspaces,
 )
 from .services.dev_container import DevContainerService
+from .services.dev_container_task import DevContainerTaskService
 
 
 def create_app(*, kube: KubeClient | None = None, create_tables: bool = False) -> FastAPI:
@@ -73,6 +75,7 @@ def create_app(*, kube: KubeClient | None = None, create_tables: bool = False) -
         except Exception:  # noqa: BLE001
             app.state.kube = FakeKubeClient()
     app.state.dev_container_service = DevContainerService(app.state.kube, rds=redis)
+    app.state.dev_task_service = DevContainerTaskService(redis)
 
     # 异常处理
     app.add_exception_handler(BizError, biz_error_handler)
@@ -103,6 +106,7 @@ def create_app(*, kube: KubeClient | None = None, create_tables: bool = False) -
     app.include_router(data.router, prefix=prefix)
     app.include_router(audit.router, prefix=prefix)
     app.include_router(health.router, prefix="")  # /healthz 不走 /api/v1
+    app.include_router(dev_proxy.router)          # /dev/... 反代不走 /api/v1
 
     return app
 

@@ -92,6 +92,7 @@
 | 爬虫数据存储 | MongoDB（motor/pymongo async，`cdc.data_items` 集合） |
 | 迁移 | Alembic（async engine） |
 | 缓存/队列 | redis-py（async） |
+| 异步任务 | Celery（Redis broker/backend，开发容器拉起等） |
 | 认证 | PyJWT（HS256）+ bcrypt（密码哈希） |
 | 校验 | Pydantic v2 |
 | K8s | `kubernetes` 客户端 + 抽象接口（测试注入 fake） |
@@ -102,8 +103,9 @@
 | 进程 | 说明 |
 | --- | --- |
 | `api` | `uvicorn backend.main:app`，CDC 控制面 API + 代理 |
-| `worker` | `python -m backend.worker`，消费 Redis 队列：webhook 重试、调度触发、审计、数据提交 |
+| `worker` | `python -m backend.worker`，消费 Redis 队列：审计等 |
 | `monitor` | `python -m backend.worker --monitor`，心跳失联巡检 + 容器空闲回收（可由 worker 内子任务承担） |
+| `celery` | `./scripts/celery.sh`（`celery -A backend.tasks.celery_app:celery_app worker`），开发容器异步拉起等异步任务 |
 
 > 简化部署：`docker-compose up` 启动 PostgreSQL + Redis；`api`/`worker` 均可本地 `uv run` 启动。
 
@@ -116,6 +118,7 @@
 | 数据推送 | ACS → CDC | `POST /api/v1/webhooks/data` | `services/data_ingest.py` + `data_items` 表 |
 | 大文件 | ACS → CDC | `POST /api/v1/webhooks/data/prepare|commit` | 预签名上传（S3/MinIO），预留 |
 | 开发容器 | CDC → K8s | K8s API | `k8s/` 编排 + `/dev-container` 路由 |
+| 开发容器访问 | 浏览器 ↔ ACS | HTTP 反向代理 | `routers/dev_proxy.py`（`/dev/{ws}/{pid}`，token 鉴权） |
 | 画面代理 | CDC ↔ ACS | WebSocket | `routers/login_live.py` + `k8s/proxy.py` |
 
 详见 `docs/webhook-protocol.md` 与 `docs/k8s-orchestration.md`。

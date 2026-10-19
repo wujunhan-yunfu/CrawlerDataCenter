@@ -5,6 +5,7 @@
 - **事实源在 PostgreSQL**；Redis 仅存易失的会话/锁/队列/热状态，可随时重建。
 - 全部业务表带 `created_at` / `updated_at`；审计与运行类表额外带 `id` 单调自增用于顺序保证。
 - 主键使用 64 位雪花式 `id`（`core/ids.py`），对外以 `xid`（如 `ws_xxx`、`p_xxx`、`run_xxx`）暴露，内部关系用整数主键。
+- 雪花 `id` 超出 JavaScript `Number` 安全整数范围（2^53-1），JSON 响应中一律序列化为**字符串**（见 `schemas/common.py` 的 `SnowflakeId`），前端始终以字符串传递 id，避免 `JSON.parse` 丢精度导致按 id 请求详情时报 "不存在"。
 - 所有业务表冗余 `workspace_id` 便于按空间过滤与配额统计。
 - 幂等与唯一约束全部落在 PG 唯一索引上。
 
@@ -79,6 +80,7 @@
 | `q:{queue}:dead` | 死信（超过 `max_attempts`） | — |
 | `q:{queue}:lease:{task_id}` | 租约时间戳（`recover_stale` 崩溃回收依据） | 5min |
 | `dev:{project_id}` | 开发容器热状态 | 10min |
+| `devtask:{task_id}` | 开发容器拉起任务元数据(项目/开始时间, 供超时判定) | 超时+5min |
 | `proc:{process_id}` | 进程心跳热状态 | 心跳间隔×3 |
 | `live:{token}` | login 画面短时令牌 → {user,project,run} | 10min |
 

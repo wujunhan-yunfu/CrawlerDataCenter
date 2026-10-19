@@ -16,6 +16,9 @@ from .errors import forbidden, unauthorized
 
 _bearer = HTTPBearer(auto_error=False)
 
+# 开发容器反代: 页面内 js/css 等子资源不会带 ?token=, 用该 Cookie 续期鉴权
+DEV_PROXY_COOKIE = "cdc_dev_token"
+
 
 async def get_current_user(
     request: Request,
@@ -74,12 +77,49 @@ def get_client_ip(request: Request) -> str:
     return request.client.host if request.client else ""
 
 
+async def get_current_user_via_token(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    rds: Redis = Depends(lambda: redis),
+) -> User:
+    """浏览器新标签页访问(无 Authorization 头)时, 支持 `?token=` 传访问令牌。
+
+    供 /dev/... 反向代理使用: 优先取 query 的 token, 其次代理 Cookie(子资源
+    js/css 等不带 query), 最后回退标准 Bearer 头。
+    """
+    token = request.query_params.get("token") or request.cookies.get(DEV_PROXY_COOKIE)
+    if not token:
+        auth = request.headers.get("authorization", "")
+        if auth.lower().startswith("bearer "):
+            token = auth[7:].strip()
+    if not token:
+        raise unauthorized()
+    try:
+        payload = decode_token(token, expected_type="access")
+    except pyjwt.PyJWTError:
+        raise unauthorized()
+
+    jti = payload.get("jti")
+    if jti and await TokenStore(rds.client).is_blacklisted(jti):
+        raise unauthorized("令牌已失效")
+
+    user = await db.get(User, int(payload["sub"]))
+    if user is None or user.status != "active":
+        raise unauthorized()
+    request.state.user = user
+    return user
+
+
 def get_kube(request: Request):
     return request.app.state.kube
 
 
 def get_dev_service(request: Request):
     return request.app.state.dev_container_service
+
+
+def get_dev_task_service(request: Request):
+    return request.app.state.dev_task_service
 
 
 def pagination_params(offset: int = 0, limit: int = 50):

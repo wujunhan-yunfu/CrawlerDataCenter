@@ -21,7 +21,7 @@ import PermissionGate from '../../components/PermissionGate'
 import { usePermissionStore } from '../../stores/permissionStore'
 
 interface Props {
-  workspaceId: number
+  workspaceId: string
 }
 
 interface MemberForm {
@@ -67,7 +67,7 @@ export default function MembersPanel({ workspaceId }: Props) {
     }
   }
 
-  const remove = async (userId: number) => {
+  const remove = async (userId: string) => {
     try {
       await apiRemoveMember(workspaceId, userId)
       message.success('已移除成员')
@@ -103,7 +103,7 @@ export default function MembersPanel({ workspaceId }: Props) {
               width: 130,
               render: (s: string) => <Tag color={s === 'workspace' ? 'blue' : 'orange'}>{s === 'workspace' ? '空间级' : '项目级'}</Tag>,
             },
-            { title: '项目 ID', dataIndex: 'project_id', width: 100, render: (v: number | null) => v ?? '-' },
+            { title: '项目 ID', dataIndex: 'project_id', width: 100, render: (v: string | null) => v ?? '-' },
             {
               title: '操作',
               key: 'actions',

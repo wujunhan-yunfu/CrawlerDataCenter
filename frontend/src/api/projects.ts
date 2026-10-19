@@ -16,22 +16,22 @@ export interface ProjectUpdatePayload {
   status?: string
 }
 
-export function apiListProjects(workspaceId: number) {
+export function apiListProjects(workspaceId: string) {
   return client.get<ProjectOut[]>(`/workspaces/${workspaceId}/projects`).then((r) => r.data)
 }
 
-export function apiCreateProject(workspaceId: number, payload: ProjectCreatePayload) {
+export function apiCreateProject(workspaceId: string, payload: ProjectCreatePayload) {
   return client.post<ProjectOut>(`/workspaces/${workspaceId}/projects`, payload).then((r) => r.data)
 }
 
-export function apiGetProject(projectId: number) {
+export function apiGetProject(projectId: string) {
   return client.get<ProjectOut>(`/projects/${projectId}`).then((r) => r.data)
 }
 
-export function apiUpdateProject(projectId: number, payload: ProjectUpdatePayload) {
+export function apiUpdateProject(projectId: string, payload: ProjectUpdatePayload) {
   return client.patch<ProjectOut>(`/projects/${projectId}`, payload).then((r) => r.data)
 }
 
-export function apiDeleteProject(projectId: number) {
+export function apiDeleteProject(projectId: string) {
   return client.delete<{ ok: boolean }>(`/projects/${projectId}`).then((r) => r.data)
 }

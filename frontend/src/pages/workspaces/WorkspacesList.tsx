@@ -84,7 +84,7 @@ export default function WorkspacesList() {
     }
   }
 
-  const remove = async (id: number) => {
+  const remove = async (id: string) => {
     try {
       await apiDeleteWorkspace(id)
       message.success('已删除工作空间')

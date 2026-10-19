@@ -7,7 +7,7 @@
 | M0 基础 | 脚手架、配置、PostgreSQL 连接、Redis 客户端、用户系统、JWT | 可注册登录 |
 | M1 权限与空间 | RBAC（角色/权限/绑定）、工作空间、成员管理 | 权限可用 |
 | M2 项目 | 爬虫项目 CRUD、来源选择、`crawler_id` 分配 | 项目可用 |
-| M3 开发容器 | K8s 编排（Pod/Service/Ingress）、loading 状态机、就绪探针轮询、空闲回收 | 可进入开发容器 |
+| M3 开发容器 | K8s 编排（Pod/Service/Ingress）、Celery 异步拉起、loading 状态机、就绪探针轮询、空闲回收 | 可进入开发容器 |
 | M4 login 模式 | login 触发 + 只读实时画面 WebSocket 代理 + 短时令牌 | 登录可完成（含人工扫码） |
 | M5 run 模式 | run 触发（once/cron）、webhook 接收与幂等、**cron 心跳与存活/健康检测**、**data.saved 数据入库（含预签名直传）** | 定时运行 + 回调 + 数据入库 + 进程可观测 |
 | M6 结果与数据 | 运行记录/结果、数据浏览与下载、webhook 投递记录、审计查询 | 数据可查 |
@@ -45,6 +45,7 @@ uv sync                              # 安装依赖
 cp .env.example .env                 # 配置 DATABASE_URL / REDIS_URL / JWT_SECRET
 uv run alembic upgrade head          # 建表 + 种子角色
 uv run uvicorn backend.main:app --port 8080     # API
+./scripts/celery.sh                             # Celery（开发容器拉起）
 uv run python -m backend.worker                 # worker（webhook 重试/调度/审计）
 uv run python -m backend.worker --monitor       # monitor（心跳巡检/容器回收）
 uv run pytest --cov=backend --cov-report=term   # 测试 + 覆盖率

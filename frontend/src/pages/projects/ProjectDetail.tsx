@@ -18,13 +18,13 @@ export default function ProjectDetail() {
   const { projectId } = useParams()
   const navigate = useNavigate()
   const { message } = AntApp.useApp()
-  const id = Number(projectId)
+  const id = projectId ?? ''
   const [project, setProject] = useState<ProjectOut | null>(null)
   const permissionCache = usePermissionStore((s) => s.cache)
   const loadPermissions = usePermissionStore((s) => s.load)
 
   useEffect(() => {
-    if (!Number.isFinite(id)) return
+    if (!id) return
     void apiGetProject(id)
       .then((p) => {
         setProject(p)

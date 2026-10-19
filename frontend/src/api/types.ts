@@ -6,7 +6,7 @@ export interface TokenOut {
 }
 
 export interface UserOut {
-  id: number
+  id: string
   username: string
   email: string
   status: string
@@ -15,30 +15,30 @@ export interface UserOut {
 
 export interface PermissionsOut {
   permissions: string[]
-  workspace_id: number | null
-  project_id: number | null
+  workspace_id: string | null
+  project_id: string | null
 }
 
 export interface WorkspaceOut {
-  id: number
+  id: string
   name: string
-  owner_id: number
+  owner_id: string
   status: string
   quota_json: Record<string, unknown> | null
   created_at: number
 }
 
 export interface MemberOut {
-  user_id: number
+  user_id: string
   username: string
   role: string
   scope: string
-  project_id: number | null
+  project_id: string | null
 }
 
 export interface ProjectOut {
-  id: number
-  workspace_id: number
+  id: string
+  workspace_id: string
   name: string
   description: string | null
   source_type: string
@@ -50,7 +50,7 @@ export interface ProjectOut {
 }
 
 export interface DevContainerOut {
-  project_id: number
+  project_id: string
   crawler_id: string
   phase: string
   dev_url: string | null
@@ -60,11 +60,35 @@ export interface DevContainerOut {
   expires_at: number | null
 }
 
+export interface DevContainerTaskOut {
+  task_id: string | null
+  project_id: string
+  status: string
+  phase: string
+  mode: string
+  dev_url: string | null
+  pod_name: string | null
+  error_code: string | null
+  message: string | null
+  started_at: number | null
+  elapsed_ms: number | null
+}
+
+export const DEV_TASK_STATUS_LABELS: Record<string, string> = {
+  pending: '排队中',
+  running: '拉起中',
+  success: '成功',
+  failed: '失败',
+  timeout: '超时',
+}
+
+export const DEV_TASK_TERMINAL = ['success', 'failed', 'timeout']
+
 export interface RunOut {
   run_id: string
-  project_id: number
+  project_id: string
   crawler_id: string
-  workspace_id: number
+  workspace_id: string
   mode: string
   trigger: string
   cron: string | null
@@ -82,9 +106,9 @@ export interface RunDetailOut extends RunOut {
 
 export interface RunProcessOut {
   process_id: string
-  project_id: number
+  project_id: string
   crawler_id: string
-  workspace_id: number
+  workspace_id: string
   cron: string | null
   pod_name: string | null
   status: string
@@ -104,11 +128,11 @@ export interface LoginTriggerOut {
 }
 
 export interface DataItemOut {
-  id: number
+  id: string
   run_id: string
   crawler_id: string
-  project_id: number
-  workspace_id: number
+  project_id: string
+  workspace_id: string
   save_id: string
   seq: number
   kind: string
@@ -123,12 +147,12 @@ export interface DataItemOut {
 }
 
 export interface AuditOut {
-  id: number
-  actor_id: number | null
+  id: string
+  actor_id: string | null
   action: string
   target_type: string | null
-  target_id: number | null
-  workspace_id: number | null
+  target_id: string | null
+  workspace_id: string | null
   detail_json: Record<string, unknown> | null
   ip: string | null
   created_at: number

@@ -111,6 +111,29 @@ async def test_project_crud_and_crawler_id(client, auth_headers):
     assert got.status_code == 404
 
 
+async def test_snowflake_ids_are_strings_for_js_clients(client, auth_headers):
+    """64 位雪花 id 必须以字符串下发, 否则前端 JSON.parse 丢精度会请求到不存在的 id。"""
+    ac, _, _ = client
+    ws = await _make_ws(ac, auth_headers)
+    proj = (
+        await ac.post(
+            f"/api/v1/workspaces/{ws['id']}/projects",
+            json={"name": "custom", "source_type": "custom"},
+            headers=auth_headers,
+        )
+    ).json()
+
+    assert isinstance(ws["id"], str)
+    assert isinstance(ws["owner_id"], str)
+    assert isinstance(proj["id"], str)
+    assert isinstance(proj["workspace_id"], str)
+
+    # 用原样返回的 id 访问详情必须命中(模拟前端导航到 /projects/{id})
+    got = await ac.get(f"/api/v1/projects/{proj['id']}", headers=auth_headers)
+    assert got.status_code == 200, got.text
+    assert got.json()["id"] == proj["id"]
+
+
 async def test_builtin_project_requires_builtin_crawler(client, auth_headers):
     ac, _, _ = client
     ws = await _make_ws(ac, auth_headers)

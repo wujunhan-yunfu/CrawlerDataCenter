@@ -9,8 +9,8 @@ import PermissionGate from '../../components/PermissionGate'
 import { usePermissionStore } from '../../stores/permissionStore'
 
 interface Props {
-  projectId: number
-  workspaceId: number
+  projectId: string
+  workspaceId: string
 }
 
 interface Frame {

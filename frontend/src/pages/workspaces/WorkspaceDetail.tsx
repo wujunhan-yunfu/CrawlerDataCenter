@@ -14,13 +14,13 @@ import { usePermissionStore } from '../../stores/permissionStore'
 export default function WorkspaceDetail() {
   const { workspaceId } = useParams()
   const { message } = AntApp.useApp()
-  const id = Number(workspaceId)
+  const id = workspaceId ?? ''
   const [ws, setWs] = useState<WorkspaceOut | null>(null)
   const permissionCache = usePermissionStore((s) => s.cache)
   const loadPermissions = usePermissionStore((s) => s.load)
 
   useEffect(() => {
-    if (!Number.isFinite(id)) return
+    if (!id) return
     void apiGetWorkspace(id)
       .then(setWs)
       .catch((e) => message.error(apiErrorMessage(e)))

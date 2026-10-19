@@ -1,7 +1,7 @@
 # CrawlerDataCenter（爬虫数据中心控制面）
 
 基于 [AgentCrawlerStudio](https://github.com/your-org/AgentCrawlerStudio) 规划（`docs/crawler-data-center-plan.md`）实现的多租户
-爬虫数据中心控制面。技术栈：**FastAPI + SQLAlchemy 2.0(async) + PostgreSQL + Redis + MongoDB**。
+爬虫数据中心控制面。技术栈：**FastAPI + SQLAlchemy 2.0(async) + PostgreSQL + Redis + MongoDB + Celery**。
 
 > 与规划文档的差异：控制面元数据由 MongoDB 改为 PostgreSQL；Redis 承担令牌/限流/锁/队列/热状态；
 > **爬虫数据正文存 MongoDB**（`cdc.data_items`），PG 只存索引与引用路径。
@@ -13,7 +13,7 @@
 - **RBAC**：角色→权限 + 用户→角色绑定（global / workspace / project 三级 scope），内置 6 个角色
 - **工作空间**：资源与权限边界，成员邀请/移除，配额（预留）
 - **爬虫项目**：`builtin` / `custom` 两种来源，`crawler_id` 自动分配（与 ACS 隔离键对齐）
-- **开发容器**：K8s 编排（Pod/Service），phase 状态机 + 就绪探针轮询 + 空闲 TTL 回收 + 配额
+- **开发容器**：Celery 异步任务 + K8s 编排（Pod/Service），phase 状态机 + 就绪探针轮询 + 任务状态轮询 + 空闲 TTL 回收 + 配额；`/dev/{ws}/{pid}` 反向代理（token 鉴权），开发模式跳过 Pod 拉起、仅上游指向本地 ACS(8000)
 - **login 实时画面**：短时效令牌 + 只读 WebSocket 代理（不注入任何输入）
 - **run 调度**：once（K8s Job）/ cron（K8s Deployment），运行记录
 - **webhook 接收**：run/heartbeat/data 三类事件，HMAC 签名 + 时间戳防重放 + 幂等 + 状态机校验
@@ -46,6 +46,7 @@ uv run python scripts/create_admin.py --on-exists reset   # 已存在则重置�
 
 # 5. 启动
 uv run uvicorn backend.main:app --port 8080 --reload    # API
+./scripts/celery.sh                                     # Celery(开发容器拉起; 开发模式可不起)
 uv run python -m backend.worker                         # worker(审计队列)
 uv run python -m backend.worker --monitor               # monitor(心跳巡检/容器回收)
 ```
@@ -66,10 +67,10 @@ backend/
   db/models/         # SQLAlchemy 模型
   redis/client.py    # Redis 客户端/限流/锁/令牌/队列/热状态
   rbac/              # 权限点、内置角色、权限解析
-  services/          # auth/workspace/project/dev_container/run/webhook_receiver/data_ingest/heartbeat/cron/audit
+  services/          # auth/workspace/project/dev_container(+task)/run/webhook_receiver/data_ingest/heartbeat/cron/audit
   k8s/               # KubeClient 抽象 + Pod/Service/Job/Deployment 模板
   routers/           # API 路由
-  tasks/worker.py    # 后台任务
+  tasks/             # Celery 应用/任务 + 后台任务 worker
 alembic/             # 数据库迁移
 docs/                # 细化方案文档
 ```

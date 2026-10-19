@@ -22,9 +22,9 @@ export default function AuditLogs() {
   const { message } = AntApp.useApp()
   const [items, setItems] = useState<AuditOut[]>([])
   const [loading, setLoading] = useState(false)
-  const [workspaceId, setWorkspaceId] = useState<number | undefined>()
+  const [workspaceId, setWorkspaceId] = useState<string | undefined>()
 
-  const load = async (wsId?: number) => {
+  const load = async (wsId?: string) => {
     setLoading(true)
     try {
       setItems(await apiListAudit({ workspace_id: wsId, limit: 200 }))
@@ -77,14 +77,14 @@ export default function AuditLogs() {
           columns={[
             { title: 'ID', dataIndex: 'id', width: 70 },
             { title: '操作', dataIndex: 'action', width: 200, render: (a: string) => ACTION_LABELS[a] ?? a },
-            { title: '操作人', dataIndex: 'actor_id', width: 90, render: (v: number | null) => v ?? '-' },
+            { title: '操作人', dataIndex: 'actor_id', width: 90, render: (v: string | null) => v ?? '-' },
             {
               title: '对象',
               key: 'target',
               width: 160,
               render: (_, r) => (r.target_type ? `${r.target_type}#${r.target_id}` : '-'),
             },
-            { title: '工作空间', dataIndex: 'workspace_id', width: 100, render: (v: number | null) => v ?? '-' },
+            { title: '工作空间', dataIndex: 'workspace_id', width: 100, render: (v: string | null) => v ?? '-' },
             { title: 'IP', dataIndex: 'ip', width: 130, render: (v: string | null) => v ?? '-' },
             { title: '时间', dataIndex: 'created_at', width: 170, render: fmtTime },
             {

@@ -33,8 +33,8 @@ export function apiMe() {
 }
 
 export interface PermissionsQuery {
-  workspace_id?: number
-  project_id?: number
+  workspace_id?: string
+  project_id?: string
 }
 
 export function apiGetPermissions(query: PermissionsQuery = {}) {
